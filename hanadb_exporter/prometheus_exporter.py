@@ -162,6 +162,12 @@ FROM m_database m;"""
                     self._logger.error('Failure in query: %s, skipping...', query.query)
                     self._logger.error(str(err))
                     continue  # Moving to the next iteration (query)
+                except Exception as err:
+                    # Some system views can emit driver-level failures instead of QueryError
+                    # (for example Host Agent backed views returning warnings/no rows).
+                    self._logger.error('Unexpected failure in query: %s, skipping...', query.query)
+                    self._logger.error(str(err))
+                    continue
                 formatted_query_result = utils.format_query_result(query_result)
                 if not formatted_query_result:
                     self._logger.warning(

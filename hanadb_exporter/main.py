@@ -12,6 +12,7 @@ import sys
 import os
 import traceback
 import logging
+import codecs
 from logging.config import fileConfig
 import time
 import json
@@ -36,6 +37,15 @@ METRICS_FILES = [
     '/etc/hanadb_exporter/metrics.json',
     '/usr/etc/hanadb_exporter/metrics.json'
 ]
+SYSTEM_DB_RETRY_INTERVAL = 5
+
+def register_cesu8_codec():
+    """
+    Register CESU-8 codec alias used by pyhdb.
+    """
+    codecs.register(
+        lambda name: codecs.lookup("utf-8") if name in ("cesu-8", "cesu8", "cesu_8") else None
+    )
 
 def parse_config(config_file):
     """
@@ -105,11 +115,44 @@ def lookup_etc_folder(config_files_path):
     raise ValueError(
         'configuration file does not exist in {}'.format(",".join(config_files_path)))
 
+
+def is_retriable_startup_error(err):
+    """
+    Return True when the exporter should keep waiting for the local SYSTEMDB startup.
+    """
+    return str(err) == 'timeout reached connecting the System database'
+
+
+def start_database_manager(dbs, hana_config, config, user, password, userkey):
+    """
+    Start DatabaseManager and keep retrying while the local SYSTEMDB is still bootstrapping.
+    """
+    while True:
+        try:
+            dbs.start(
+                hana_config['host'], hana_config.get('port', 30013),
+                user=user,
+                password=password,
+                userkey=userkey,
+                multi_tenant=config.get('multi_tenant', True),
+                timeout=config.get('timeout', 30),
+                ssl=hana_config.get('ssl', False),
+                ssl_validate_cert=hana_config.get('ssl_validate_cert', False))
+            return
+        except Exception as err:
+            if not is_retriable_startup_error(err):
+                raise
+            LOGGER.warning(
+                'system database is not ready yet, retrying in %s seconds',
+                SYSTEM_DB_RETRY_INTERVAL)
+            time.sleep(SYSTEM_DB_RETRY_INTERVAL)
+
 # Start up the server to expose the metrics.
 def run():
     """
     Main execution
     """
+    register_cesu8_codec()
     args = parse_arguments()
     if args.version:
         # pylint:disable=C0325
@@ -151,15 +194,7 @@ def run():
             user = db_credentials["username"]
             password = db_credentials["password"]
 
-        dbs.start(
-            hana_config['host'], hana_config.get('port', 30013),
-            user=user,
-            password=password,
-            userkey=userkey,
-            multi_tenant=config.get('multi_tenant', True),
-            timeout=config.get('timeout', 30),
-            ssl=hana_config.get('ssl', False),
-            ssl_validate_cert=hana_config.get('ssl_validate_cert', False))
+        start_database_manager(dbs, hana_config, config, user, password, userkey)
     except KeyError as err:
         raise KeyError('Configuration file {} is malformed: {} not found'.format(args.config, err))
 
