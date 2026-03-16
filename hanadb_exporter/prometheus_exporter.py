@@ -33,8 +33,14 @@ class SapHanaCollectors(object):
         Collect metrics for each collector
         """
         for collector in self._collectors:
-            for metric in collector.collect():
-                yield metric
+            try:
+                for metric in collector.collect():
+                    yield metric
+            except Exception as err:
+                self._logger.error(
+                    'Collector for database metrics failed, skipping collector scrape: %s',
+                    str(err),
+                )
 
 
 class SapHanaCollector(object):
@@ -146,8 +152,13 @@ FROM m_database m;"""
         execute db queries defined by metrics_config/api file, and store them in
         a prometheus metric_object, which will be served over http for scraping e.g gauge, etc.
         """
-        # Try to reconnect if the connection is lost. It will raise an exception is case of error
-        self.reconnect()
+        # Try to reconnect if the connection is lost. A reconnect failure should not
+        # fail the whole scrape; skip this collector and let other collectors run.
+        try:
+            self.reconnect()
+        except Exception as err:
+            self._logger.error('Reconnect failed, skipping collector scrape: %s', str(err))
+            return
 
         for query in self._metrics_config.queries:
             if not query.enabled:

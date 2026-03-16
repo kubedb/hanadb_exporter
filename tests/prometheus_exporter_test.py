@@ -78,6 +78,33 @@ class TestSapHanaCollectors(object):
         coll1.collect.assert_called_once_with()
         coll2.collect.assert_called_once_with()
 
+    @mock.patch('logging.Logger.error')
+    @mock.patch('hanadb_exporter.prometheus_exporter.SapHanaCollector')
+    def test_collect_skip_failing_collector(self, mock_collector, mock_logger):
+
+        conn1 = mock.Mock()
+        conn2 = mock.Mock()
+
+        connectors = [conn1, conn2]
+
+        coll1 = mock.Mock()
+        coll1.collect.side_effect = Exception('reconnect failed')
+        coll2 = mock.Mock()
+        coll2.collect.return_value = ['metric1', 'metric2']
+
+        mock_collector.side_effect = [coll1, coll2]
+
+        collectors = prometheus_exporter.SapHanaCollectors(connectors, 'metrics.json')
+
+        assert list(collectors.collect()) == ['metric1', 'metric2']
+
+        coll1.collect.assert_called_once_with()
+        coll2.collect.assert_called_once_with()
+        mock_logger.assert_called_once_with(
+            'Collector for database metrics failed, skipping collector scrape: %s',
+            'reconnect failed',
+        )
+
 
 class TestSapHanaCollector(object):
     """
@@ -294,6 +321,20 @@ FROM m_database m;"""
 
         self._collector.reconnect.assert_called_once_with()
         mock_logger.assert_called_once_with('test')
+
+    @mock.patch('hanadb_exporter.utils.check_hana_range')
+    @mock.patch('logging.Logger.error')
+    def test_collect_reconnect_failure(self, mock_logger, mock_hana_range):
+        self._collector.reconnect = mock.Mock(side_effect=Exception('connection refused'))
+        self._collector._metrics_config.queries = [mock.Mock()]
+
+        assert list(self._collector.collect()) == []
+
+        self._collector.reconnect.assert_called_once_with()
+        mock_hana_range.assert_not_called()
+        self._mock_connector.query.assert_not_called()
+        mock_logger.assert_called_once_with(
+            'Reconnect failed, skipping collector scrape: %s', 'connection refused')
 
     @mock.patch('hanadb_exporter.utils.format_query_result')
     @mock.patch('hanadb_exporter.utils.check_hana_range')

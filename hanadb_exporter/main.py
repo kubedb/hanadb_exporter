@@ -116,11 +116,17 @@ def lookup_etc_folder(config_files_path):
         'configuration file does not exist in {}'.format(",".join(config_files_path)))
 
 
-def is_retriable_startup_error(err):
+def is_retriable_startup_error(err, hana_config):
     """
     Return True when the exporter should keep waiting for the local SYSTEMDB startup.
     """
-    return str(err) == 'timeout reached connecting the System database'
+    err_str = str(err).lower()
+    host = hana_config.get('host', '')
+    return (
+        host in ('127.0.0.1', 'localhost') and
+        'timeout reached connecting the system database' in err_str and
+        'connection refused' in err_str
+    )
 
 
 def start_database_manager(dbs, hana_config, config, user, password, userkey):
@@ -140,7 +146,7 @@ def start_database_manager(dbs, hana_config, config, user, password, userkey):
                 ssl_validate_cert=hana_config.get('ssl_validate_cert', False))
             return
         except Exception as err:
-            if not is_retriable_startup_error(err):
+            if not is_retriable_startup_error(err, hana_config):
                 raise
             LOGGER.warning(
                 'system database is not ready yet, retrying in %s seconds',

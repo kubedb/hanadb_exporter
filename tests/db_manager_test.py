@@ -249,7 +249,7 @@ class TestDatabaseManager(object):
             self._db_manager.start(
                 '10.10.10.10', 30013, user='user', password='pass', multi_tenant=False, timeout=2)
 
-        assert 'timeout reached connecting the System database' in str(err.value)
+        assert 'timeout reached connecting the System database: err' in str(err.value)
 
         self._db_manager._system_db_connector.connect.assert_has_calls([
             mock.call('10.10.10.10', 30013, **connection_data),

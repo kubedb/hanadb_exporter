@@ -138,6 +138,7 @@ WHERE COORDINATOR_TYPE='MASTER' AND SQL_PORT<>0"""
 
         current_time = time.time()
         timeout = current_time + kwargs.get('timeout', 600)
+        last_error = None
         while current_time <= timeout:
             try:
                 # parameters are passed using kwargs to the connect method
@@ -147,17 +148,18 @@ WHERE COORDINATOR_TYPE='MASTER' AND SQL_PORT<>0"""
                 self._db_connectors.append(self._system_db_connector)
                 break
             except hdb_connector.connectors.base_connector.ConnectionError as err:
+                last_error = str(err)
                 self._logger.error(
-                    'the connection to the system database failed. error message: %s', str(err))
+                    'the connection to the system database failed. error message: %s', last_error)
                 # This conditions is used to stop the exporter if the provided userkey is not valid
-                if 'Invalid value for KEY' in str(err):
+                if 'Invalid value for KEY' in last_error:
                     raise hdb_connector.connectors.base_connector.ConnectionError(
                         'provided userkey is not valid. Check if dbapi is installed correctly')
                 time.sleep(RECONNECTION_INTERVAL)
                 current_time = time.time()
         else:
             raise hdb_connector.connectors.base_connector.ConnectionError(
-                'timeout reached connecting the System database')
+                'timeout reached connecting the System database: {}'.format(last_error))
 
         if kwargs.get('multi_tenant', True):
             self._connect_tenants(host, connection_data)

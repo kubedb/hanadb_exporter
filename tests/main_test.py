@@ -224,7 +224,7 @@ class TestMain(object):
         db_instance = mock.Mock()
         db_instance.get_connectors.return_value = 'connectors'
         db_instance.start.side_effect = [
-            Exception('timeout reached connecting the System database'),
+            Exception('timeout reached connecting the System database: connection failed: [Errno 111] Connection refused'),
             None,
         ]
         mock_db_manager.return_value = db_instance

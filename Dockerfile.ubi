@@ -1,0 +1,23 @@
+FROM registry.access.redhat.com/ubi9/python-311:latest
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+USER 0
+WORKDIR /app
+
+RUN microdnf install -y git \
+    && microdnf clean all
+
+COPY requirements.txt setup.py README.md LICENSE MANIFEST.in ./
+COPY hanadb_exporter ./hanadb_exporter
+COPY bin/hanadb_exporter ./bin/hanadb_exporter
+RUN mkdir -p /etc/hanadb_exporter
+COPY metrics.json /etc/hanadb_exporter/metrics.json
+
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install --no-cache-dir .
+
+USER 1001
+
+ENTRYPOINT ["hanadb_exporter"]
