@@ -6,8 +6,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 USER 0
 WORKDIR /app
 
-RUN microdnf install -y git \
-    && microdnf clean all
+RUN dnf install -y git \
+    && dnf clean all
 
 COPY requirements.txt setup.py README.md LICENSE MANIFEST.in ./
 COPY hanadb_exporter ./hanadb_exporter
