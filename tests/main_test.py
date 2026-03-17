@@ -209,7 +209,7 @@ class TestMain(object):
         config = {
             'listen_address': '127.0.0.1',
             'hana': {
-                'host': '10.10.10.10',
+                'host': '127.0.0.1',
                 'port': 1234,
                 'user': 'user',
                 'password': 'pass'
@@ -239,10 +239,10 @@ class TestMain(object):
 
         db_instance.start.assert_has_calls([
             mock.call(
-                '10.10.10.10', 1234, user='user', password='pass',
+                '127.0.0.1', 1234, user='user', password='pass',
                 userkey=None, multi_tenant=True, timeout=30, ssl=False, ssl_validate_cert=False),
             mock.call(
-                '10.10.10.10', 1234, user='user', password='pass',
+                '127.0.0.1', 1234, user='user', password='pass',
                 userkey=None, multi_tenant=True, timeout=30, ssl=False, ssl_validate_cert=False),
         ])
         mock_logger.warning.assert_called_once_with(
