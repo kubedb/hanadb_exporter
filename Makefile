@@ -14,17 +14,8 @@ AUTHOR ?= shap-staff@suse.de
 OBS_PROJECT ?= network:ha-clustering:sap-deployments:devel
 REPOSITORY ?= kubedb/hanadb_exporter
 
-# container image settings
-CONTAINER_TOOL ?= docker
-REGISTRY ?= zobayerabedin
-IMAGE_NAME ?= hanadb-exporter
-IMAGE ?= $(REGISTRY)/$(IMAGE_NAME)
-TAG ?= $(VERSION)
-IMAGE_PULL_POLICY ?= Always
-SAFE_TAG := $(shell echo $(TAG) | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9_.-]+/-/g; s/^-+//; s/-+$$//')
-IMAGE_TAG ?= $(SAFE_TAG)
-IMG ?= $(IMAGE):$(IMAGE_TAG)
-IMG_LATEST ?= $(IMAGE):latest
+DOCKER_IMAGE_NAME ?= hanadb-exporter
+DOCKER_IMAGE_TAG ?= $(subst /,-,$(shell git rev-parse --abbrev-ref HEAD))
 
 default: deps test
 
@@ -84,11 +75,8 @@ dashboards-obs-commit: dashboards-obs-workdir
 	cd build/obs/grafana-sap-hana-dashboards; osc addremove
 	cd build/obs/grafana-sap-hana-dashboards; osc commit -m "Update from git rev $(REVISION)"
 
-image:
-	$(CONTAINER_TOOL) build -t $(IMG) -t $(IMG_LATEST) .
+docker:
+	@echo ">> building docker image"
+	@docker build -t "$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)" .
 
-push: image
-	$(CONTAINER_TOOL) push $(IMG)
-	$(CONTAINER_TOOL) push $(IMG_LATEST)
-
-.PHONY: checks clean coverage deps static-checks test test-all image push
+.PHONY: checks clean coverage deps static-checks test test-all docker
