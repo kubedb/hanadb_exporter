@@ -2,16 +2,20 @@ name: Exporter CI
 
 # this workflow will
 # - test the codebase on every pull request
-# - commit to the OBS development upstream whenever the master branch is updated
+# - commit to the OBS development upstream whenever the main branch is updated
 # - perform an OBS Submit Request to downstream whenever a GitHub release is published
 
 on:
   push:
+    branches:
+    - main
     paths-ignore:
     - 'dashboards/**'
     - 'packaging/obs/grafana-sap-hana-dashboards/**'
     - '.github/workflows/dashboards*'
   pull_request:
+    branches:
+    - main
     paths-ignore:
     - 'dashboards/**'
     - 'packaging/obs/grafana-sap-hana-dashboards/**'
@@ -19,12 +23,16 @@ on:
   release:
     types: [ published ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}-ci
+  cancel-in-progress: true
+
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: [3.6, 3.8, 3.11]
+        python-version: [3.11]
     steps:
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
@@ -41,10 +49,10 @@ jobs:
 
   obs-commit:
     needs: test
-    if: ${{ github.event_name != 'pull_request' }}
-    concurrency: 
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    concurrency:
       group: obs
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container: shap/continuous_deliver
     env:
       OBS_USER: ${{ secrets.OBS_USER }}
@@ -69,7 +77,7 @@ jobs:
     if: github.event.release
     concurrency:
       group: obs
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     container: shap/continuous_deliver
     env:
       OBS_USER: ${{ secrets.OBS_USER }}
