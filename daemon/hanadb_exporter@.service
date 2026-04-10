@@ -1,6 +1,6 @@
 [Unit]
 Description=SAP HANA database metrics exporter
-Documentation=https://github.com/SUSE/hanadb_exporter
+Documentation=https://github.com/kubedb/hanadb_exporter
 
 [Service]
 Type=notify

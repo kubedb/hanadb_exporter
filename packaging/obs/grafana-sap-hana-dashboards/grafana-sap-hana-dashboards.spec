@@ -20,7 +20,7 @@ Release:        0
 License:        Apache-2.0
 Summary:        Grafana Dashboards displaying metrics about SAP HANA databases.
 Group:          System/Monitoring
-Url:            https://github.com/SUSE/hanadb_exporter
+Url:            https://github.com/kubedb/hanadb_exporter
 Source:         %{name}-%{version}.tar.gz
 BuildArch:      noarch
 Requires:       grafana-sap-providers

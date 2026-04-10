@@ -12,7 +12,10 @@ AUTHOR ?= shap-staff@suse.de
 
 # you can customize any of the following to build forks
 OBS_PROJECT ?= network:ha-clustering:sap-deployments:devel
-REPOSITORY ?= SUSE/hanadb_exporter
+REPOSITORY ?= kubedb/hanadb_exporter
+
+DOCKER_IMAGE_NAME ?= hanadb-exporter
+DOCKER_IMAGE_TAG ?= $(subst /,-,$(shell git rev-parse --abbrev-ref HEAD))
 
 default: deps test
 
@@ -72,4 +75,8 @@ dashboards-obs-commit: dashboards-obs-workdir
 	cd build/obs/grafana-sap-hana-dashboards; osc addremove
 	cd build/obs/grafana-sap-hana-dashboards; osc commit -m "Update from git rev $(REVISION)"
 
-.PHONY: checks clean coverage deps static-checks test test-all
+docker:
+	@echo ">> building docker image"
+	@docker build -t "$(DOCKER_IMAGE_NAME):$(DOCKER_IMAGE_TAG)" .
+
+.PHONY: checks clean coverage deps static-checks test test-all docker

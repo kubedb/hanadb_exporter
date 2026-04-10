@@ -12,3 +12,5 @@ config.json
 .vscode
 .pytest_cache
 /build
+*.md
+!README.md
