@@ -143,7 +143,8 @@ def start_database_manager(dbs, hana_config, config, user, password, userkey):
                 multi_tenant=config.get('multi_tenant', True),
                 timeout=config.get('timeout', 30),
                 ssl=hana_config.get('ssl', False),
-                ssl_validate_cert=hana_config.get('ssl_validate_cert', False))
+                ssl_validate_cert=hana_config.get('ssl_validate_cert', False),
+                ssl_trust_store=hana_config.get('ssl_trust_store', None))
             return
         except Exception as err:
             if not is_retriable_startup_error(err, hana_config):

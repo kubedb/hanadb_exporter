@@ -216,13 +216,28 @@ class TestDatabaseManager(object):
         mock_where.return_value = 'my.pem'
         mock_api.API = 'dbapi'
         connection_data = self._db_manager._get_connection_data(
-            None, 'user', 'pass', ssl=True, ssl_validate_cert=True)
+            None, 'user', 'pass', ssl=True, ssl_validate_cert=True, ssl_trust_store=None)
         assert connection_data == {
             'userkey': None, 'user': 'user', 'password': 'pass', 'RECONNECT': 'FALSE',
             'encrypt': True, 'sslValidateCertificate': True, 'sslTrustStore': 'my.pem'}
         logger.assert_has_calls([
             mock.call('user/password combination will be used to connect to the database'),
             mock.call('Using ssl connection...')
+        ])
+
+    @mock.patch('hanadb_exporter.db_manager.hdb_connector')
+    @mock.patch('logging.Logger.info')
+    def test_get_connection_ssl_custom_trust_store(self, logger, mock_api):
+        mock_api.API = 'dbapi'
+        connection_data = self._db_manager._get_connection_data(
+            None, 'user', 'pass', ssl=True, ssl_validate_cert=True, ssl_trust_store='/tmp/ca.crt')
+        assert connection_data == {
+            'userkey': None, 'user': 'user', 'password': 'pass', 'RECONNECT': 'FALSE',
+            'encrypt': True, 'sslValidateCertificate': True, 'sslTrustStore': '/tmp/ca.crt'}
+        logger.assert_has_calls([
+            mock.call('user/password combination will be used to connect to the database'),
+            mock.call('Using ssl connection...'),
+            mock.call('Using custom ssl trust store %s', '/tmp/ca.crt')
         ])
 
     @mock.patch('hanadb_exporter.db_manager.hdb_connector.connectors.base_connector')

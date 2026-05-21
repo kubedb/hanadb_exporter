@@ -97,7 +97,10 @@ WHERE COORDINATOR_TYPE='MASTER' AND SQL_PORT<>0"""
         if ssl:
             self._logger.info('Using ssl connection...')
 
-        if ssl and CERTIFI_INSTALLED:
+        trust_store = kwargs.get('ssl_trust_store', None)
+        if ssl and trust_store:
+            self._logger.info('Using custom ssl trust store %s', trust_store)
+        elif ssl and CERTIFI_INSTALLED:
             trust_store = certifi.where()
         elif ssl:
             self._logger.warn('certifi package is not installed. Using the default ssl pem key...')
@@ -133,7 +136,8 @@ WHERE COORDINATOR_TYPE='MASTER' AND SQL_PORT<>0"""
             kwargs.get('user', ''),
             kwargs.get('password', ''),
             ssl=kwargs.get('ssl', False),
-            ssl_validate_cert=kwargs.get('ssl_validate_cert', False)
+            ssl_validate_cert=kwargs.get('ssl_validate_cert', False),
+            ssl_trust_store=kwargs.get('ssl_trust_store', None)
         )
 
         current_time = time.time()
