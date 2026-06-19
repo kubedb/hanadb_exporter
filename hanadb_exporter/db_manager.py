@@ -112,7 +112,7 @@ WHERE COORDINATOR_TYPE='MASTER' AND SQL_PORT<>0"""
             'RECONNECT': 'FALSE',
             'encrypt': ssl,
             'sslValidateCertificate': kwargs.get('ssl_validate_cert', False) if ssl else False,
-            'sslTrustStore': trust_store if ssl and CERTIFI_INSTALLED else None
+            'sslTrustStore': trust_store if ssl else None
         }
 
     def start(self, host, port, **kwargs):
@@ -130,6 +130,7 @@ WHERE COORDINATOR_TYPE='MASTER' AND SQL_PORT<>0"""
             timeout (int, opt): Timeout in seconds to connect to the System database
             ssl (bool, opt): Enable SSL connection
             ssl_validate_cert (bool, opt): Validate SSL certificate. Required in HANA cloud
+            ssl_trust_store (str, opt): Path to a custom SSL CA trust store
         """
         connection_data = self._get_connection_data(
             kwargs.get('userkey', None),

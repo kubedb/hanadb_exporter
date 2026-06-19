@@ -225,6 +225,7 @@ class TestDatabaseManager(object):
             mock.call('Using ssl connection...')
         ])
 
+    @mock.patch('hanadb_exporter.db_manager.CERTIFI_INSTALLED', False)
     @mock.patch('hanadb_exporter.db_manager.hdb_connector')
     @mock.patch('logging.Logger.info')
     def test_get_connection_ssl_custom_trust_store(self, logger, mock_api):
