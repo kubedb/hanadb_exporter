@@ -89,6 +89,7 @@ important items in the configuration file:
   - `hana.password`: Password of an existing user.
   - `hana.ssl`: Enable SSL connection (False by default). Only available for `dbapi` connector
   - `hana.ssl_validate_cert`: Enable SSL certification validation. This field is required by HANA cloud. Only available for `dbapi` connector
+  - `hana.ssl_trust_store`: Path to a custom CA trust store PEM file to validate the server certificate. When unset, the exporter falls back to certifi if available.
   - `hana.aws_secret_name`: The secret name containing the username and password. This is a secure option to use AWS secrets manager if SAP HANA database is stored on AWS. `aws_secret_name` and `user/password` are self exclusive, `aws_secret_name` is the default if both options are set.
   - `logging.config_file`: Python logging system configuration file (by default WARN and ERROR level messages will be sent to the syslog)
   - `logging.log_file`: Logging file (/var/log/hanadb_exporter.log by default)

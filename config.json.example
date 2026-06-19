@@ -9,7 +9,8 @@
     "user": "SYSTEM",
     "password": "PASSWORD",
     "ssl": false,
-    "ssl_validate_cert": false
+    "ssl_validate_cert": false,
+    "ssl_trust_store": "/etc/hanadb_exporter/certs/ca.crt"
   },
   "logging": {
     "config_file": "./logging_config.ini",

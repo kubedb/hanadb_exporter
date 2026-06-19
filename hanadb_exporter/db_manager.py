@@ -97,7 +97,10 @@ WHERE COORDINATOR_TYPE='MASTER' AND SQL_PORT<>0"""
         if ssl:
             self._logger.info('Using ssl connection...')
 
-        if ssl and CERTIFI_INSTALLED:
+        trust_store = kwargs.get('ssl_trust_store', None)
+        if ssl and trust_store:
+            self._logger.info('Using custom ssl trust store %s', trust_store)
+        elif ssl and CERTIFI_INSTALLED:
             trust_store = certifi.where()
         elif ssl:
             self._logger.warn('certifi package is not installed. Using the default ssl pem key...')
@@ -109,7 +112,7 @@ WHERE COORDINATOR_TYPE='MASTER' AND SQL_PORT<>0"""
             'RECONNECT': 'FALSE',
             'encrypt': ssl,
             'sslValidateCertificate': kwargs.get('ssl_validate_cert', False) if ssl else False,
-            'sslTrustStore': trust_store if ssl and CERTIFI_INSTALLED else None
+            'sslTrustStore': trust_store if ssl else None
         }
 
     def start(self, host, port, **kwargs):
@@ -127,13 +130,15 @@ WHERE COORDINATOR_TYPE='MASTER' AND SQL_PORT<>0"""
             timeout (int, opt): Timeout in seconds to connect to the System database
             ssl (bool, opt): Enable SSL connection
             ssl_validate_cert (bool, opt): Validate SSL certificate. Required in HANA cloud
+            ssl_trust_store (str, opt): Path to a custom SSL CA trust store
         """
         connection_data = self._get_connection_data(
             kwargs.get('userkey', None),
             kwargs.get('user', ''),
             kwargs.get('password', ''),
             ssl=kwargs.get('ssl', False),
-            ssl_validate_cert=kwargs.get('ssl_validate_cert', False)
+            ssl_validate_cert=kwargs.get('ssl_validate_cert', False),
+            ssl_trust_store=kwargs.get('ssl_trust_store', None)
         )
 
         current_time = time.time()
